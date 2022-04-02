@@ -1,0 +1,33 @@
+{
+  "name": "hoaniled-cli",
+  "version": "1.0.0",
+  "description": "Un CLI Guachi",
+  "type": "module",
+  "exports": "src/index.js",
+  "bin": {
+    "hoaniled-cli": "node bin/hoaniled-cli.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cli",
+    "hoaniled-cli",
+    "hoaniled"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "arg": "^5.0.1",
+    "chalk": "^4.1.2",
+    "esm": "^3.2.25",
+    "execa": "^6.1.0",
+    "inquirer": "^8.2.2",
+    "listr": "^0.14.3",
+    "ncp": "^2.0.0",
+    "pkg-install": "^1.0.0"
+  }
+}
