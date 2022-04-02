@@ -1,20 +1,18 @@
 import arg from 'arg';
 import inquirer from 'inquirer';
 
-import { TYPE_OPTIONS, getActionOptionsByType } from './const/CommonConst.js';
+import { TYPE_OPTIONS, getActionOptionsByType, getElementOptions } from '../const/CommonConst.js';
 
-function parseArgumentsIntoOptions(rawArgs) {
+export function parseArgumentsIntoOptions(rawArgs) {
     let actionIndex = 1;
     let elementIndex = 2;
     const args = arg(
         {
-            '--git': Boolean,
             '--yes': Boolean,
             '--install': Boolean,
             '--type': String,
             '--action': String,
             '--skip': '--yes',
-            '-g': '--git',
             '-y': '--yes',
             '-i': '--install',
             '-t': '--type',
@@ -46,16 +44,15 @@ function parseArgumentsIntoOptions(rawArgs) {
     }
     return {
         skipPromts: args['--yes'] || false,
-        git: args['--git'] || false,
         runInstall: args['--install'] || false,
-        type: type,
-        action: action,
-        element: element,
+        type: type ? type.toLowerCase() : undefined,
+        action: action ? action.toLowerCase()  : undefined,
+        element: element ? element.toLowerCase()  : undefined,
     }
 }
 
 // [Args -> Type (--type | -t ), Action (--action, -a), Element (--element, -e) ]
-async function promptForMissingOptions(options){
+export async function promptForMissingOptions(options){
     let response;
     const defaultType = "Angular";
 
@@ -67,7 +64,8 @@ async function promptForMissingOptions(options){
     }
     else{
         const questions = [];
-        const nextQuestions = [];
+        const actionQuestion = [];
+        const elementQuestion = [];
         if(!options.type){
             questions.push( {
                 type: 'list',
@@ -78,18 +76,61 @@ async function promptForMissingOptions(options){
             });
         }
         if(!options.action){
-            questions.push( {
+            let question = {
                 type: 'list',
                 name: 'action',
                 message: 'Choose an action',
                 choices: getActionOptionsByType(options.type),
-            });
+            };
+            if(options.type){
+                questions.push(question);
+            }
+            else{
+                actionQuestion.push(question);
+            }
         }
-        const answers = await inquirer.prompt(questions);
+        if(!options.element){
+            let question = {
+                type: 'list',
+                name: 'element',
+                message: 'Choose an Element',
+                choices: getElementOptions(options.type, options.action),
+            }
+            if(options.type && options.action){
+                questions.push(question);
+            }
+            else{
+                elementQuestion.push(question);
+            }
+        }
+        
+
+        var answers = await inquirer.prompt(questions);
+        let type = options.type || answers.type;
+        let action = options.action || answers.action;
+        if(actionQuestion.length > 0){
+            let actionQuestionIndex = actionQuestion.findIndex( (questionInfo) => {
+                return questionInfo.name === 'action';
+            });
+            if(actionQuestionIndex != -1){
+                actionQuestion[actionQuestionIndex].choices = getActionOptionsByType(type);
+            }
+            answers = await inquirer.prompt(actionQuestion);
+            action = action || answers.action;
+        }
+        let element = options.element || answers.element;
+        if(elementQuestion.length > 0){
+            elementQuestion[0].choices = getElementOptions(type, action);
+
+            answers = await inquirer.prompt(elementQuestion);
+            element = element || answers.element;
+        }
+
         response = {
             ...options,
-            template: options.template || answers.template,
-            git: options.git || answers.git,
+            type: type,
+            action: action,
+            element: element,
         }
     }
     return response;
